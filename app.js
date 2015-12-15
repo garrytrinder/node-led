@@ -83,6 +83,7 @@ app.io.on('connection', function (socket) {
 });
 
 function exit() {
+  console.log('Cleaning up GPIO before exiting...');
   led.unexport();
   process.exit();
 }
