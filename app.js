@@ -58,10 +58,35 @@ app.use(function (err, req, res, next) {
 
 var GPIO = require('onoff').Gpio;
 var led = new GPIO(18, 'out');
-var button = new GPIO(17, 'in', 'both');
 
 app.io.on('connection', function (socket) {
-	socket.emit('led', { led: 1 });
+
+  console.log('client connected');
+
+  app.io.sockets.emit('users', app.io.engine.clientsCount);
+
+  led.read(function (err, value) {
+    app.io.sockets.emit('led', { led: value });
+  });
+
+  socket.on('disconnect', function () {
+    console.log('client disconnected');
+    app.io.sockets.emit('users', app.io.engine.clientsCount);
+  });
+
+  socket.on('led', function (data) {
+    console.log('led changed: %O', data);
+    led.writeSync(data.led);
+    app.io.sockets.emit('led', data);
+  });
+
 });
+
+function exit() {
+  led.unexport();
+  process.exit();
+}
+
+process.on('SIGINT', exit);
 
 module.exports = app;
